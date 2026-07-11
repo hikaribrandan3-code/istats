@@ -1,0 +1,805 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>iStats — System Monitor for Your Mac</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #ffffff;
+            color: #1a1a1a;
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        /* Navigation */
+        nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+            padding: 0 24px;
+        }
+
+        .nav-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            height: 64px;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 700;
+            font-size: 18px;
+            color: #1a1a1a;
+            text-decoration: none;
+        }
+
+        .logo-icon {
+            width: 32px;
+            height: 32px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 14px;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 32px;
+            align-items: center;
+        }
+
+        .nav-links a {
+            text-decoration: none;
+            color: #666;
+            font-size: 14px;
+            font-weight: 500;
+            transition: color 0.2s;
+        }
+
+        .nav-links a:hover {
+            color: #1a1a1a;
+        }
+
+        .nav-cta {
+            background: #1a1a1a;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+
+        .nav-cta:hover {
+            background: #333;
+            transform: translateY(-1px);
+        }
+
+        /* Hero Section */
+        .hero {
+            padding: 140px 24px 80px;
+            max-width: 900px;
+            margin: 0 auto;
+            text-align: center;
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: #f0f0f0;
+            padding: 8px 16px;
+            border-radius: 100px;
+            font-size: 13px;
+            font-weight: 500;
+            color: #666;
+            margin-bottom: 32px;
+        }
+
+        .badge-dot {
+            width: 8px;
+            height: 8px;
+            background: #10b981;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .hero h1 {
+            font-size: 56px;
+            font-weight: 800;
+            line-height: 1.1;
+            margin-bottom: 24px;
+            letter-spacing: -0.02em;
+        }
+
+        .hero h1 span {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .hero p {
+            font-size: 20px;
+            color: #666;
+            max-width: 600px;
+            margin: 0 auto 40px;
+            line-height: 1.6;
+        }
+
+        .hero-cta {
+            display: inline-flex;
+            align-items: center;
+            gap: 16px;
+            background: #1a1a1a;
+            color: white;
+            padding: 16px 32px;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+
+        .hero-cta:hover {
+            background: #333;
+            transform: translateY(-2px);
+            box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+        }
+
+        .hero-cta .price {
+            font-size: 14px;
+            opacity: 0.8;
+            font-weight: 400;
+        }
+
+        /* Stats Bar */
+        .stats-bar {
+            display: flex;
+            justify-content: center;
+            gap: 48px;
+            padding: 40px 24px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 36px;
+            font-weight: 800;
+            color: #1a1a1a;
+            line-height: 1;
+        }
+
+        .stat-label {
+            font-size: 13px;
+            color: #999;
+            margin-top: 4px;
+            font-weight: 500;
+        }
+
+        /* Features Section */
+        .features {
+            padding: 80px 24px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .section-label {
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            color: #999;
+            margin-bottom: 16px;
+        }
+
+        .features h2 {
+            font-size: 40px;
+            font-weight: 800;
+            margin-bottom: 60px;
+            line-height: 1.2;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 24px;
+        }
+
+        .feature-card {
+            background: #fafafa;
+            border-radius: 20px;
+            padding: 40px;
+            transition: all 0.3s;
+            border: 1px solid rgba(0,0,0,0.04);
+        }
+
+        .feature-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 20px 60px rgba(0,0,0,0.08);
+        }
+
+        .feature-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            margin-bottom: 20px;
+        }
+
+        .feature-card h3 {
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 12px;
+        }
+
+        .feature-card p {
+            font-size: 15px;
+            color: #666;
+            line-height: 1.6;
+        }
+
+        /* How It Works */
+        .how-it-works {
+            padding: 80px 24px;
+            max-width: 900px;
+            margin: 0 auto;
+            text-align: center;
+        }
+
+        .how-it-works h2 {
+            font-size: 40px;
+            font-weight: 800;
+            margin-bottom: 60px;
+        }
+
+        .steps {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 40px;
+        }
+
+        .step {
+            text-align: left;
+        }
+
+        .step-number {
+            font-size: 14px;
+            font-weight: 700;
+            color: #667eea;
+            margin-bottom: 12px;
+        }
+
+        .step h3 {
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .step p {
+            font-size: 14px;
+            color: #666;
+            line-height: 1.6;
+        }
+
+        /* Testimonials */
+        .testimonials {
+            padding: 80px 24px;
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        .testimonials h2 {
+            font-size: 40px;
+            font-weight: 800;
+            margin-bottom: 48px;
+            text-align: center;
+        }
+
+        .testimonial-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 24px;
+        }
+
+        .testimonial-card {
+            background: #fafafa;
+            border-radius: 16px;
+            padding: 32px;
+            border: 1px solid rgba(0,0,0,0.04);
+        }
+
+        .stars {
+            color: #f59e0b;
+            font-size: 16px;
+            margin-bottom: 16px;
+        }
+
+        .testimonial-text {
+            font-size: 15px;
+            color: #444;
+            line-height: 1.6;
+            margin-bottom: 20px;
+            font-style: italic;
+        }
+
+        .testimonial-author {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .author-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 700;
+            font-size: 14px;
+        }
+
+        .author-info h4 {
+            font-size: 14px;
+            font-weight: 700;
+        }
+
+        .author-info p {
+            font-size: 13px;
+            color: #999;
+        }
+
+        /* Pricing */
+        .pricing {
+            padding: 80px 24px;
+            max-width: 600px;
+            margin: 0 auto;
+            text-align: center;
+        }
+
+        .pricing h2 {
+            font-size: 40px;
+            font-weight: 800;
+            margin-bottom: 16px;
+        }
+
+        .pricing-subtitle {
+            font-size: 18px;
+            color: #666;
+            margin-bottom: 48px;
+        }
+
+        .pricing-card {
+            background: #fafafa;
+            border-radius: 24px;
+            padding: 48px;
+            border: 2px solid #1a1a1a;
+            position: relative;
+        }
+
+        .pricing-badge {
+            position: absolute;
+            top: -16px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #1a1a1a;
+            color: white;
+            padding: 8px 24px;
+            border-radius: 100px;
+            font-size: 13px;
+            font-weight: 700;
+        }
+
+        .pricing-card h3 {
+            font-size: 28px;
+            font-weight: 800;
+            margin-bottom: 8px;
+        }
+
+        .pricing-card .description {
+            font-size: 15px;
+            color: #666;
+            margin-bottom: 24px;
+        }
+
+        .price {
+            font-size: 56px;
+            font-weight: 800;
+            line-height: 1;
+            margin-bottom: 32px;
+        }
+
+        .price span {
+            font-size: 24px;
+            font-weight: 400;
+            color: #999;
+        }
+
+        .features-list {
+            text-align: left;
+            margin-bottom: 32px;
+        }
+
+        .features-list li {
+            list-style: none;
+            padding: 12px 0;
+            border-bottom: 1px solid rgba(0,0,0,0.06);
+            font-size: 15px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .features-list li:last-child {
+            border-bottom: none;
+        }
+
+        .check {
+            color: #10b981;
+            font-weight: 700;
+        }
+
+        .pricing-cta {
+            display: block;
+            background: #1a1a1a;
+            color: white;
+            padding: 16px;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+
+        .pricing-cta:hover {
+            background: #333;
+            transform: translateY(-2px);
+        }
+
+        /* FAQ */
+        .faq {
+            padding: 80px 24px;
+            max-width: 700px;
+            margin: 0 auto;
+        }
+
+        .faq h2 {
+            font-size: 32px;
+            font-weight: 800;
+            margin-bottom: 40px;
+            text-align: center;
+        }
+
+        .faq-item {
+            border-bottom: 1px solid rgba(0,0,0,0.08);
+            padding: 24px 0;
+        }
+
+        .faq-question {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .faq-answer {
+            font-size: 15px;
+            color: #666;
+            line-height: 1.6;
+        }
+
+        /* Footer */
+        footer {
+            padding: 60px 24px 40px;
+            border-top: 1px solid rgba(0,0,0,0.06);
+            text-align: center;
+        }
+
+        .footer-logo {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            font-weight: 700;
+            font-size: 18px;
+            margin-bottom: 24px;
+        }
+
+        .footer-links {
+            display: flex;
+            justify-content: center;
+            gap: 32px;
+            margin-bottom: 24px;
+        }
+
+        .footer-links a {
+            text-decoration: none;
+            color: #666;
+            font-size: 14px;
+            transition: color 0.2s;
+        }
+
+        .footer-links a:hover {
+            color: #1a1a1a;
+        }
+
+        .footer-copy {
+            font-size: 13px;
+            color: #999;
+        }
+
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            .nav-links {
+                display: none;
+            }
+
+            .hero {
+                padding: 120px 20px 60px;
+            }
+
+            .hero h1 {
+                font-size: 36px;
+            }
+
+            .hero p {
+                font-size: 17px;
+            }
+
+            .stats-bar {
+                flex-direction: column;
+                gap: 24px;
+            }
+
+            .features-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .steps {
+                grid-template-columns: 1fr;
+            }
+
+            .testimonial-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .pricing-card {
+                padding: 32px 24px;
+            }
+
+            .price {
+                font-size: 42px;
+            }
+        }
+    </style>
+<base target="_blank">
+</head>
+<body>
+    <nav>
+        <div class="nav-container">
+            <a href="#" class="logo">
+                <div class="logo-icon">◈</div>
+                iStats
+            </a>
+            <div class="nav-links">
+                <a href="#features">Features</a>
+                <a href="#how-it-works">How It Works</a>
+                <a href="#pricing">Pricing</a>
+                <a href="#faq">FAQ</a>
+                <a href="#" class="nav-cta">Download Free</a>
+            </div>
+        </div>
+    </nav>
+
+    <section class="hero">
+        <div class="badge">
+            <span class="badge-dot"></span>
+            Now Available for macOS
+        </div>
+        <h1>Your Mac's vital signs.<br><span>Always visible.</span></h1>
+        <p>iStats lives in your menu bar and shows real-time CPU, memory, network, and disk usage. One glance, know exactly what your Mac is doing.</p>
+        <a href="#" class="hero-cta">
+            Get iStats
+            <span class="price">— Free Download</span>
+        </a>
+    </section>
+
+    <section class="stats-bar">
+        <div class="stat-item">
+            <div class="stat-number">0ms</div>
+            <div class="stat-label">Latency</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-number">0%</div>
+            <div class="stat-label">CPU Usage</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-number">24/7</div>
+            <div class="stat-label">Monitoring</div>
+        </div>
+    </section>
+
+    <section class="features" id="features">
+        <div class="section-label">Features</div>
+        <h2>Built for pros.<br>Designed for you.</h2>
+        <div class="features-grid">
+            <div class="feature-card">
+                <div class="feature-icon" style="background: linear-gradient(135deg, #667eea, #764ba2);">◈</div>
+                <h3>Menu Bar Widgets</h3>
+                <p>CPU, RAM, network, and disk usage — all visible from your menu bar. Click any widget for a detailed breakdown with live graphs.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon" style="background: linear-gradient(135deg, #f093fb, #f5576c);">◉</div>
+                <h3>Live Graphs</h3>
+                <p>Beautiful Swift Charts showing usage over time. Spot trends, identify bottlenecks, and understand your Mac's performance at a glance.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon" style="background: linear-gradient(135deg, #4facfe, #00f2fe);">◎</div>
+                <h3>100% Offline</h3>
+                <p>All monitoring happens locally using native macOS APIs. No network calls, no data collection, no cloud. Your system info stays on your system.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon" style="background: linear-gradient(135deg, #43e97b, #38f9d7);">◐</div>
+                <h3>Lightweight</h3>
+                <p>Uses less than 1% CPU when idle. Designed to be invisible until you need it. Won't slow down your Mac while monitoring it.</p>
+            </div>
+        </div>
+    </section>
+
+    <section class="how-it-works" id="how-it-works">
+        <div class="section-label">How It Works</div>
+        <h2>Three steps to total visibility.</h2>
+        <div class="steps">
+            <div class="step">
+                <div class="step-number">01</div>
+                <h3>Download & Install</h3>
+                <p>Get iStats from the website or App Store. Drag to Applications, launch once. Takes 10 seconds.</p>
+            </div>
+            <div class="step">
+                <div class="step-number">02</div>
+                <h3>Customize Widgets</h3>
+                <p>Choose which metrics to show in your menu bar. CPU, memory, network, disk, or all four. Reorder however you want.</p>
+            </div>
+            <div class="step">
+                <div class="step-number">03</div>
+                <h3>Monitor & Optimize</h3>
+                <p>Click any widget for detailed graphs. Identify what's hogging resources. Close heavy apps. Keep your Mac running smooth.</p>
+            </div>
+        </div>
+    </section>
+
+    <section class="testimonials">
+        <div class="section-label">Reviews</div>
+        <h2>Loved by Mac users.</h2>
+        <div class="testimonial-grid">
+            <div class="testimonial-card">
+                <div class="stars">★★★★★</div>
+                <p class="testimonial-text">"Finally a system monitor that doesn't look like it was built in 2005. Clean, minimal, and always there when I need it."</p>
+                <div class="testimonial-author">
+                    <div class="author-avatar">MR</div>
+                    <div class="author-info">
+                        <h4>Marco R.</h4>
+                        <p>Developer, Argentina</p>
+                    </div>
+                </div>
+            </div>
+            <div class="testimonial-card">
+                <div class="stars">★★★★★</div>
+                <p class="testimonial-text">"I use iStats to catch runaway processes before they drain my battery. The menu bar widgets are perfect — glance and go."</p>
+                <div class="testimonial-author">
+                    <div class="author-avatar">LC</div>
+                    <div class="author-info">
+                        <h4>Laura C.</h4>
+                        <p>Designer, Mexico</p>
+                    </div>
+                </div>
+            </div>
+            <div class="testimonial-card">
+                <div class="stars">★★★★★</div>
+                <p class="testimonial-text">"Replaced three separate monitoring apps with one. iStats does everything I need and stays out of my way. Worth every penny."</p>
+                <div class="testimonial-author">
+                    <div class="author-avatar">DP</div>
+                    <div class="author-info">
+                        <h4>Diego P.</h4>
+                        <p>Video Editor, Colombia</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="pricing" id="pricing">
+        <div class="section-label">Pricing</div>
+        <h2>One price. Forever.</h2>
+        <p class="pricing-subtitle">No subscriptions. No hidden fees. Just great software.</p>
+        <div class="pricing-card">
+            <div class="pricing-badge">BEST VALUE</div>
+            <h3>iStats</h3>
+            <p class="description">Real-time system monitoring for your Mac.</p>
+            <div class="price">Free<span> Download</span></div>
+            <ul class="features-list">
+                <li><span class="check">✓</span> Menu bar CPU, RAM, network, disk widgets</li>
+                <li><span class="check">✓</span> Live graphs with Swift Charts</li>
+                <li><span class="check">✓</span> 100% offline, no cloud</li>
+                <li><span class="check">✓</span> Lightweight (<1% CPU idle)</li>
+                <li><span class="check">✓</span> Customizable widget order</li>
+                <li><span class="check">✓</span> Dark mode support</li>
+            </ul>
+            <a href="#" class="pricing-cta">Get Started Now</a>
+        </div>
+    </section>
+
+    <section class="faq" id="faq">
+        <h2>Frequently Asked Questions</h2>
+        <div class="faq-item">
+            <div class="faq-question">Is iStats really free to download?</div>
+            <div class="faq-answer">Yes. iStats is completely free to download and use. No paid tier, no hidden features, no subscriptions. All the monitoring power, no cost.</div>
+        </div>
+        <div class="faq-item">
+            <div class="faq-question">Does it work on Intel Macs?</div>
+            <div class="faq-answer">iStats is optimized for Apple Silicon (M1, M2, M3, M4) and requires macOS 14 (Sonoma) or later. Intel Mac support is not available at this time.</div>
+        </div>
+        <div class="faq-item">
+            <div class="faq-question">Does iStats collect any data?</div>
+            <div class="faq-answer">Absolutely not. iStats runs entirely on your Mac using native system APIs. No network calls, no telemetry, no accounts required. Your system data never leaves your machine.</div>
+        </div>
+        <div class="faq-item">
+            <div class="faq-question">Can I use iStats with iSuite Office?</div>
+            <div class="faq-answer">Yes. iStats is included free with the iSuite Office bundle. If you already own iSuite, you get iStats at no extra cost.</div>
+        </div>
+    </section>
+
+    <footer>
+        <div class="footer-logo">
+            <div class="logo-icon">◈</div>
+            iStats
+        </div>
+        <div class="footer-links">
+            <a href="#">Privacy</a>
+            <a href="#">Support</a>
+            <a href="#">Twitter</a>
+            <a href="#">iSuite Office</a>
+        </div>
+        <p class="footer-copy">© 2026 iStats. Part of iSuite Office. Built for Mac.</p>
+    </footer>
+</body>
+</html>
