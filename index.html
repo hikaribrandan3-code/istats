@@ -496,6 +496,95 @@
             transform: translateY(-2px);
         }
 
+        /* Suite cross-promo */
+        .suite {
+            padding: 80px 24px;
+            max-width: 600px;
+            margin: 0 auto;
+            text-align: center;
+        }
+
+        .suite h2 {
+            font-size: 40px;
+            font-weight: 800;
+            margin-bottom: 16px;
+        }
+
+        .suite-subtitle {
+            font-size: 18px;
+            color: #666;
+            margin-bottom: 48px;
+        }
+
+        .suite-card-wrap {
+            display: flex;
+            justify-content: center;
+        }
+
+        .suite-card {
+            width: 100%;
+            max-width: 420px;
+            background: #fafafa;
+            border-radius: 24px;
+            padding: 40px;
+            border: 2px solid #667eea;
+        }
+
+        .suite-card-icon {
+            width: 48px;
+            height: 48px;
+            margin: 0 auto 20px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+        }
+
+        .suite-card h3 {
+            font-size: 24px;
+            font-weight: 800;
+            margin-bottom: 12px;
+        }
+
+        .suite-card-description {
+            font-size: 15px;
+            color: #666;
+            line-height: 1.6;
+            margin-bottom: 24px;
+        }
+
+        .suite-card-price {
+            font-size: 28px;
+            font-weight: 800;
+            margin-bottom: 24px;
+        }
+
+        .suite-card-price span {
+            font-size: 14px;
+            font-weight: 400;
+            color: #999;
+        }
+
+        .suite-card-cta {
+            display: block;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 14px;
+            border-radius: 12px;
+            font-size: 15px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+
+        .suite-card-cta:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
+        }
+
         /* FAQ */
         .faq {
             padding: 80px 24px;
@@ -623,9 +712,10 @@
             <div class="nav-links">
                 <a href="#features">Features</a>
                 <a href="#how-it-works">How It Works</a>
+                <a href="#suite">iSuite</a>
                 <a href="#pricing">Pricing</a>
                 <a href="#faq">FAQ</a>
-                <a href="#" class="nav-cta">Download Free</a>
+                <a href="#pricing" class="nav-cta">Get iStats — $3.99</a>
             </div>
         </div>
     </nav>
@@ -768,6 +858,21 @@
         </div>
     </section>
 
+    <section class="suite" id="suite">
+        <div class="section-label">More from iSuite</div>
+        <h2>Complete your Mac toolkit.</h2>
+        <p class="suite-subtitle">One suite, built for privacy. Each app stands on its own.</p>
+        <div class="suite-card-wrap">
+            <div class="suite-card">
+                <div class="suite-card-icon">🧠</div>
+                <h3>iBrain</h3>
+                <p class="suite-card-description">Private AI chat that runs entirely on your Mac via Ollama. No cloud, no account, works offline — with optional bring-your-own-key cloud upgrade.</p>
+                <div class="suite-card-price">$5.99 <span>one-time</span></div>
+                <a href="https://hikaribrandan3-code.github.io/ibrian/" class="suite-card-cta">Get iBrain — $5.99</a>
+            </div>
+        </div>
+    </section>
+
     <section class="faq" id="faq">
         <h2>Frequently Asked Questions</h2>
         <div class="faq-item">
@@ -784,7 +889,7 @@
         </div>
         <div class="faq-item">
             <div class="faq-question">Can I use iStats with iSuite Office?</div>
-            <div class="faq-answer">Yes. iStats is included free with the iSuite Office bundle. If you already own iSuite, you get iStats at no extra cost.</div>
+            <div class="faq-answer">Yes. iStats is part of the iSuite Office family of Mac apps, alongside iBrain and others — each sold separately so you only pay for what you need.</div>
         </div>
     </section>
 
