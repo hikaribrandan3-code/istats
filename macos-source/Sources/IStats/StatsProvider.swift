@@ -16,7 +16,7 @@ struct ProcessStat: Identifiable {
 struct DiskVolume: Identifiable {
     let id: String // mount path
     let name: String
-    let free: UInt64
+    let available: UInt64
     let total: UInt64
 }
 
@@ -32,8 +32,7 @@ final class StatsProvider: ObservableObject {
     @Published var ramCached: UInt64 = 0
     @Published var ramFree: UInt64 = 0
     @Published var ramTotal: UInt64 = ProcessInfo.processInfo.physicalMemory
-    @Published var ramPressure: Double = 0         // 0...1
-    @Published var ramHistory: [Double] = []       // used fraction 0...1
+    @Published var ramHistory: [Double] = []       // estimated used fraction 0...1
     @Published var topRAMProcesses: [ProcessStat] = []
 
     @Published var networkDown: UInt64 = 0         // bytes/sec
@@ -51,6 +50,8 @@ final class StatsProvider: ObservableObject {
     // Previous samples for delta-based metrics
     private var prevCPUTicks: [[UInt32]] = []              // per core [user, system, idle, nice]
     private var prevNetBytes: (down: UInt64, up: UInt64)?
+    private var prevNetInterface: String?
+    private var prevNetSample: Date?
     private var prevProcTime: [Int32: UInt64] = [:]        // pid -> total ns
     private var prevProcSample: Date?
 
@@ -131,18 +132,15 @@ final class StatsProvider: ObservableObject {
         let active = UInt64(stats.active_count) * pageSize
         let wired = UInt64(stats.wire_count) * pageSize
         let compressed = UInt64(stats.compressor_page_count) * pageSize
-        let speculative = UInt64(stats.speculative_count) * pageSize
-        let purgeable = UInt64(stats.purgeable_count) * pageSize
-        let external = UInt64(stats.external_page_count) * pageSize
         let free = UInt64(stats.free_count) * pageSize
 
-        // Mirror Activity Monitor: used = active + wired + compressed (app memory
-        // + kernel + swap-compressed); cached = file-backed + purgeable.
-        ramUsed = active + wired + compressed
-        ramCached = external + purgeable + speculative
-        ramFree = free
-        ramPressure = min(1, Double(ramUsed) / Double(ramTotal))
-        push(&ramHistory, Double(ramUsed) / Double(ramTotal))
+        // These VM page classes are only an estimate of memory composition;
+        // they are not Apple's memory-pressure metric or Activity Monitor's
+        // exact categories. Keep the displayed segments bounded by total RAM.
+        ramUsed = min(active + wired + compressed, ramTotal)
+        ramFree = min(free, ramTotal - ramUsed)
+        ramCached = ramTotal - ramUsed - ramFree // remaining cache/other pages
+        push(&ramHistory, ramTotal > 0 ? Double(ramUsed) / Double(ramTotal) : 0)
     }
 
     // MARK: - Network
@@ -152,10 +150,8 @@ final class StatsProvider: ObservableObject {
         guard getifaddrs(&addrs) == 0, let first = addrs else { return }
         defer { freeifaddrs(addrs) }
 
-        var down: UInt64 = 0
-        var up: UInt64 = 0
-        var activeInterface = "—"
-        var ip = "—"
+        var counters: [String: (down: UInt64, up: UInt64)] = [:]
+        var ipv4: [(name: String, address: String)] = []
 
         var cursor: UnsafeMutablePointer<ifaddrs>? = first
         while let ifa = cursor {
@@ -165,32 +161,52 @@ final class StatsProvider: ObservableObject {
             let isLoopback = (flags & IFF_LOOPBACK) != 0
 
             if let addr = ifa.pointee.ifa_addr, isUp, !isLoopback {
-                if addr.pointee.sa_family == UInt8(AF_LINK), name.hasPrefix("en") || name.hasPrefix("utun") || name.hasPrefix("pdp") {
+                if addr.pointee.sa_family == UInt8(AF_LINK) {
                     if let data = ifa.pointee.ifa_data?.assumingMemoryBound(to: if_data.self) {
-                        down &+= UInt64(data.pointee.ifi_ibytes)
-                        up &+= UInt64(data.pointee.ifi_obytes)
+                        counters[name] = (UInt64(data.pointee.ifi_ibytes), UInt64(data.pointee.ifi_obytes))
                     }
                 }
-                if addr.pointee.sa_family == UInt8(AF_INET), name.hasPrefix("en") {
+                if addr.pointee.sa_family == UInt8(AF_INET),
+                   name.hasPrefix("en") || name.hasPrefix("pdp") || name.hasPrefix("utun") {
                     var host = [CChar](repeating: 0, count: Int(NI_MAXHOST))
                     if getnameinfo(addr, socklen_t(addr.pointee.sa_len), &host, socklen_t(host.count), nil, 0, NI_NUMERICHOST) == 0 {
-                        ip = String(cString: host)
-                        activeInterface = name
+                        let address = String(cString: host)
+                        if !address.hasPrefix("169.254.") && address != "0.0.0.0" {
+                            ipv4.append((name, address))
+                        }
                     }
                 }
             }
             cursor = ifa.pointee.ifa_next
         }
 
-        if let prev = prevNetBytes {
-            let dDown = down >= prev.down ? down - prev.down : 0
-            let dUp = up >= prev.up ? up - prev.up : 0
-            networkDown = UInt64(Double(dDown) / interval)
-            networkUp = UInt64(Double(dUp) / interval)
-            push(&downHistory, Double(networkDown))
-            push(&upHistory, Double(networkUp))
+        func priority(_ name: String) -> Int {
+            if name == "en0" { return 0 }
+            if name.hasPrefix("en") { return 1 }
+            if name.hasPrefix("pdp") { return 2 }
+            return 3
         }
-        prevNetBytes = (down, up)
+        let selected = ipv4.sorted { priority($0.name) < priority($1.name) }.first
+        let activeInterface = selected?.name ?? "—"
+        let ip = selected?.address ?? "—"
+        let bytes = counters[activeInterface] ?? (0, 0)
+        let now = Date()
+        if let prev = prevNetBytes, prevNetInterface == activeInterface,
+           let previousTime = prevNetSample, now.timeIntervalSince(previousTime) > 0.1 {
+            let dDown = bytes.down >= prev.down ? bytes.down - prev.down : 0
+            let dUp = bytes.up >= prev.up ? bytes.up - prev.up : 0
+            let elapsed = now.timeIntervalSince(previousTime)
+            networkDown = UInt64(Double(dDown) / elapsed)
+            networkUp = UInt64(Double(dUp) / elapsed)
+        } else {
+            networkDown = 0
+            networkUp = 0
+        }
+        push(&downHistory, Double(networkDown))
+        push(&upHistory, Double(networkUp))
+        prevNetBytes = bytes
+        prevNetInterface = activeInterface
+        prevNetSample = now
         interfaceName = activeInterface
         localIP = ip
     }
@@ -198,19 +214,20 @@ final class StatsProvider: ObservableObject {
     // MARK: - Disk
 
     private func updateDisk() {
-        let keys: Set<URLResourceKey> = [.volumeNameKey, .volumeTotalCapacityKey, .volumeAvailableCapacityForImportantUsageKey, .volumeIsBrowsableKey, .volumeIsLocalKey]
+        let keys: Set<URLResourceKey> = [.volumeNameKey, .volumeTotalCapacityKey, .volumeAvailableCapacityKey, .volumeIsBrowsableKey, .volumeIsLocalKey]
         let urls = FileManager.default.mountedVolumeURLs(includingResourceValuesForKeys: Array(keys), options: [.skipHiddenVolumes]) ?? []
         var result: [DiskVolume] = []
         for url in urls {
             guard let values = try? url.resourceValues(forKeys: keys),
                   values.volumeIsLocal == true,
                   values.volumeIsBrowsable == true,
-                  let total = values.volumeTotalCapacity, total > 0 else { continue }
-            let free = UInt64(values.volumeAvailableCapacityForImportantUsage ?? 0)
+                  let total = values.volumeTotalCapacity, total > 0,
+                  let availableCapacity = values.volumeAvailableCapacity else { continue }
+            let available = UInt64(max(0, min(availableCapacity, total)))
             result.append(DiskVolume(
                 id: url.path,
                 name: values.volumeName ?? url.lastPathComponent,
-                free: free,
+                available: available,
                 total: UInt64(total)
             ))
         }
@@ -292,26 +309,16 @@ enum Fmt {
     }
 
     static func speed(_ bytesPerSec: UInt64) -> String {
-        if bytesPerSec >= 1_000_000 {
-            return String(format: "%.1f MB/s", Double(bytesPerSec) / 1_048_576)
+        if bytesPerSec >= 1_048_576 {
+            return String(format: "%.1f MiB/s", Double(bytesPerSec) / 1_048_576)
         }
-        if bytesPerSec >= 1_000 {
-            return String(format: "%.0f KB/s", Double(bytesPerSec) / 1_024)
+        if bytesPerSec >= 1_024 {
+            return String(format: "%.0f KiB/s", Double(bytesPerSec) / 1_024)
         }
         return "\(bytesPerSec) B/s"
     }
 
-    static func speedShort(_ bytesPerSec: UInt64) -> String {
-        if bytesPerSec >= 1_000_000 {
-            return String(format: "%.1fMB", Double(bytesPerSec) / 1_048_576)
-        }
-        if bytesPerSec >= 1_000 {
-            return String(format: "%.0fKB", Double(bytesPerSec) / 1_024)
-        }
-        return "\(bytesPerSec)B"
-    }
-
     static func gigabytes(_ value: UInt64) -> String {
-        String(format: "%.1fGB", Double(value) / 1_073_741_824)
+        String(format: "%.1f GiB", Double(value) / 1_073_741_824)
     }
 }

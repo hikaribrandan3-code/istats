@@ -121,8 +121,6 @@ struct RAMPanel: View {
             let used = Double(stats.ramUsed)
             let cached = Double(stats.ramCached)
             let total = Double(stats.ramTotal)
-            let free = max(total - used - cached, 0)
-
             GeometryReader { geo in
                 HStack(spacing: 2) {
                     Rectangle().fill(Color.blue)
@@ -138,7 +136,7 @@ struct RAMPanel: View {
             VStack(alignment: .leading, spacing: 4) {
                 legendRow(color: .blue, label: Strings.get("memory.used", lang: language), value: Fmt.gigabytes(stats.ramUsed))
                 legendRow(color: .blue.opacity(0.5), label: Strings.get("memory.cached", lang: language), value: Fmt.gigabytes(stats.ramCached))
-                legendRow(color: .blue.opacity(0.15), label: Strings.get("memory.free", lang: language), value: Fmt.gigabytes(UInt64(free)))
+                legendRow(color: .blue.opacity(0.15), label: Strings.get("memory.free", lang: language), value: Fmt.gigabytes(stats.ramFree))
             }
 
             Text("\(Strings.get("memory.total", lang: language)) \(Fmt.gigabytes(stats.ramTotal))")
@@ -234,7 +232,7 @@ struct DiskPanel: View {
                     Text(vol.name)
                         .font(.system(size: 12, weight: .medium))
 
-                    let usedFraction = vol.total > 0 ? Double(vol.total - vol.free) / Double(vol.total) : 0
+                    let usedFraction = vol.total > 0 ? Double(vol.total - vol.available) / Double(vol.total) : 0
                     GeometryReader { geo in
                         ZStack(alignment: .leading) {
                             RoundedRectangle(cornerRadius: 5).fill(Color.gray.opacity(0.15))
@@ -245,9 +243,9 @@ struct DiskPanel: View {
                     .frame(height: 14)
 
                     HStack {
-                        Text("\(Strings.get("disk.used", lang: language)) \(Fmt.gigabytes(vol.total - vol.free))")
+                        Text("\(Strings.get("disk.used", lang: language)) \(Fmt.gigabytes(vol.total - vol.available))")
                         Spacer()
-                        Text("\(Strings.get("disk.free", lang: language)) \(Fmt.gigabytes(vol.free))")
+                        Text("\(Strings.get("disk.free", lang: language)) \(Fmt.gigabytes(vol.available))")
                     }
                     .font(.system(size: 11).monospacedDigit())
                     .foregroundStyle(.secondary)

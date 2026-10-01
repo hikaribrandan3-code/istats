@@ -33,8 +33,8 @@ struct Strings {
                 .es: "Salir de iStats",
             ],
             "settings.version": [
-                .en: "v1.0 Summer 2026 • iSuite Office",
-                .es: "v1.0 Verano 2026 • iSuite Office",
+                .en: "iStats • iSuite Office",
+                .es: "iStats • iSuite Office",
             ],
 
             // DashboardView / Panels
@@ -57,8 +57,8 @@ struct Strings {
 
             // CPU Panel
             "cpu.history": [
-                .en: "Last 60 seconds",
-                .es: "Últimos 60 segundos",
+                .en: "Last 60 samples",
+                .es: "Últimas 60 muestras",
             ],
             "cpu.topProcesses": [
                 .en: "TOP PROCESSES",
@@ -67,24 +67,24 @@ struct Strings {
 
             // Memory Panel
             "memory.used": [
-                .en: "Used",
-                .es: "Usado",
+                .en: "Used (estimate)",
+                .es: "Usado (estimado)",
             ],
             "memory.cached": [
-                .en: "Cached",
-                .es: "En caché",
+                .en: "Other / cache",
+                .es: "Otros / caché",
             ],
             "memory.free": [
-                .en: "Free",
-                .es: "Libre",
+                .en: "Free pages",
+                .es: "Páginas libres",
             ],
             "memory.total": [
                 .en: "Total",
                 .es: "Total",
             ],
             "memory.history": [
-                .en: "Last 60 seconds",
-                .es: "Últimos 60 segundos",
+                .en: "Last 60 samples",
+                .es: "Últimas 60 muestras",
             ],
             "memory.topProcesses": [
                 .en: "TOP PROCESSES",
@@ -101,8 +101,8 @@ struct Strings {
                 .es: "Subida",
             ],
             "network.interface": [
-                .en: "Active Interface",
-                .es: "Interfaz Activa",
+                .en: "Sampled Interface",
+                .es: "Interfaz medida",
             ],
             "network.ip": [
                 .en: "Local IP",
@@ -111,12 +111,12 @@ struct Strings {
 
             // Disk Panel
             "disk.used": [
-                .en: "Used",
-                .es: "Usado",
+                .en: "Used / reserved",
+                .es: "Usado / reservado",
             ],
             "disk.free": [
-                .en: "Free",
-                .es: "Libre",
+                .en: "Available",
+                .es: "Disponible",
             ],
             "disk.total": [
                 .en: "Total",
